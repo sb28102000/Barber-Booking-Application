@@ -1,12 +1,15 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
-  templateUrl: './app.html',
+  standalone: true,
+  imports: [CommonModule, RouterOutlet], 
+  templateUrl: './app.html', 
   styleUrl: './app.css'
 })
+// We renamed this from 'AppComponent' to 'App' to match your main.ts file
 export class App {
-  protected readonly title = signal('barber-booking-ui');
+  title = 'barber-booking-ui';
 }
