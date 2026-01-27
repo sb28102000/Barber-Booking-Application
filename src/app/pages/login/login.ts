@@ -1,14 +1,13 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-// This import will work now because we created the file in Step 1
-import { AuthService } from '../../services/auth.service';
+import { Router, RouterLink } from '@angular/router'; // <--- 1. Import RouterLink
+import { HttpClient } from '@angular/common/http'; // <--- 2. Use HttpClient directly
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink], // <--- 3. Add RouterLink to imports
   template: `
   <div class="container d-flex justify-content-center align-items-center vh-100">
     <div class="card shadow p-4" style="width: 400px;">
@@ -28,6 +27,10 @@ import { AuthService } from '../../services/auth.service';
         <button (click)="onLogin()" class="btn btn-primary w-100">
           Secure Login
         </button>
+        
+        <p class="mt-3 text-center">
+          New user? <a routerLink="/signup">Create an account</a>
+        </p>
       </div>
     </div>
   </div>
@@ -37,25 +40,28 @@ export class LoginComponent {
   username = '';
   password = '';
   
-  // Inject the service
-  private authService = inject(AuthService);
-  private router = inject(Router);
+  http = inject(HttpClient); // Inject HttpClient directly
+  router = inject(Router);
 
   onLogin() {
-    const user = { username: this.username, password: this.password };
+    const loginObj = { username: this.username, password: this.password };
     
-    // FIX: We explicitly add ': any' to res and err to satisfy strict mode
-    this.authService.login(user).subscribe({
+    this.http.post('http://localhost:8080/api/v1/auth/login', loginObj).subscribe({
       next: (res: any) => { 
-        if (res && res.accessToken) {
-            this.authService.saveToken(res.accessToken);
-            alert('Login Success!');
-            this.router.navigate(['/booking']);
+        if (res.accessToken) {
+            localStorage.setItem('token', res.accessToken);
+            
+            // CHECK: Is this the Admin?
+            if (this.username === 'admin') {
+              this.router.navigate(['/admin']); // Go to Dashboard
+            } else {
+              this.router.navigate(['/booking']); // Go to Regular Booking
+            }
         }
       },
-      error: (err: any) => {
+      error: (err) => {
         console.error(err);
-        alert('Login Failed');
+        alert('Login Failed. Check username/password.');
       }
     });
   }
