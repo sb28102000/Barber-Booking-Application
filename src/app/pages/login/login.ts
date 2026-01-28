@@ -1,13 +1,14 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router'; // <--- 1. Import RouterLink
-import { HttpClient } from '@angular/common/http'; // <--- 2. Use HttpClient directly
+import { Router, RouterLink } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import Swal from 'sweetalert2'; // Make sure this is imported
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink], // <--- 3. Add RouterLink to imports
+  imports: [CommonModule, FormsModule, RouterLink],
   template: `
   <div class="container d-flex justify-content-center align-items-center vh-100">
     <div class="card shadow p-4" style="width: 400px;">
@@ -40,7 +41,7 @@ export class LoginComponent {
   username = '';
   password = '';
   
-  http = inject(HttpClient); // Inject HttpClient directly
+  http = inject(HttpClient);
   router = inject(Router);
 
   onLogin() {
@@ -51,17 +52,27 @@ export class LoginComponent {
         if (res.accessToken) {
             localStorage.setItem('token', res.accessToken);
             
-            // CHECK: Is this the Admin?
-            if (this.username === 'admin') {
-              this.router.navigate(['/admin']); // Go to Dashboard
-            } else {
-              this.router.navigate(['/booking']); // Go to Regular Booking
+            // Show Success
+            const Toast = Swal.mixin({
+              toast: true, position: 'top-end', showConfirmButton: false, timer: 3000
+            });
+            Toast.fire({ icon: 'success', title: 'Signed in successfully' });
+
+            // --- NEW LOGIC: USE THE REAL ROLE ---
+            // The backend now sends "role": "BARBER" or "USER"
+            if (res.role === 'ADMIN') {
+              this.router.navigate(['/admin']);
+            } 
+            else if (res.role === 'BARBER') {
+              this.router.navigate(['/barber-portal']);
+            } 
+            else {
+              this.router.navigate(['/booking']);
             }
         }
       },
       error: (err) => {
-        console.error(err);
-        alert('Login Failed. Check username/password.');
+        Swal.fire('Login Failed', 'Invalid Username or Password', 'error');
       }
     });
   }
